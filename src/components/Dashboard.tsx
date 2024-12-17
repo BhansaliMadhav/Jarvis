@@ -3,11 +3,29 @@ import { trpc } from "@/app/_trpc/client";
 import UploadButton from "./UploadButton";
 import Link from "next/link";
 import { format } from "date-fns";
-import { Ghost, MessageSquare, Plus } from "lucide-react";
+import { Ghost, Loader2, MessageSquare, Plus, Trash } from "lucide-react";
 import Skeleton from "react-loading-skeleton";
+import { Button } from "./ui/button";
+import { useState } from "react";
 
 const Dashboard = () => {
+  const [currentlyDeletingFile, setCUrrentlyDeletingFile] = useState<
+    string | null
+  >(null);
+
+  const utils = trpc.useUtils();
   const { data: files, isLoading } = trpc.getUserFiles.useQuery();
+  const { mutate: deleteFile } = trpc.deleteFile.useMutation({
+    onSuccess: () => {
+      utils.getUserFiles.invalidate();
+    },
+    onMutate({ id }) {
+      setCUrrentlyDeletingFile(id);
+    },
+    onSettled() {
+      setCUrrentlyDeletingFile(null);
+    },
+  });
   return (
     <main className="mx-auto max-w-7xl md:p-10">
       <div className="mt-8 flex flex-col items-start justify-between gap-4 border-b border-gray-200 pb-5 sm:flex-row sm:items-center sm:gap-0">
@@ -49,7 +67,7 @@ const Dashboard = () => {
                 <div className="px-6 mt-4 grid grid-cols-3 place-items-center py-2 gap-6 text-xs text-zinc-500">
                   <div className="flex items-center gap-2">
                     <Plus className="h-4 w-4" />
-                    {format(new Date(file.createdAt), "MMM yyyy")}
+                    {format(new Date(file.createdAt), "dd MMM yyyy")}
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -57,7 +75,7 @@ const Dashboard = () => {
                     mocked
                   </div>
 
-                  {/* <Button
+                  <Button
                     onClick={() => deleteFile({ id: file.id })}
                     size="sm"
                     className="w-full"
@@ -68,13 +86,13 @@ const Dashboard = () => {
                     ) : (
                       <Trash className="h-4 w-4" />
                     )}
-                  </Button> */}
+                  </Button>
                 </div>
               </li>
             ))}
         </ul>
       ) : isLoading ? (
-        <Skeleton height={100} className="my-2" count={3} />
+        <Skeleton height={100} className="my-2" count={5} />
       ) : (
         <div className="mt-16 flex flex-col items-center gap-2">
           <Ghost className="h-8 w-8 text-zinc-800" />
