@@ -36,7 +36,7 @@ const UploadDropZone = () => {
                 {...getInputProps()}
                 type="file"
                 accept="application/pdf"
-                style={{ display: "none" }} // Hide the input element
+                className="hidden"
               />
               {acceptedFiles && acceptedFiles[0] ? (
                 <div className="max-w-xs bg-white flex items-center rounded-md overflow-hidden outline outline-[1px] outline-zinc-200 divide-x divide-zinc-200"></div>
