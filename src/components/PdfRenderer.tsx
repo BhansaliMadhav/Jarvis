@@ -19,6 +19,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+import SimpleBar from "simplebar-react";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.js",
@@ -32,6 +33,7 @@ const PdfRenderer = ({ url }: PdfRendererProps) => {
   const { toast } = useToast();
   const [numPages, setNumPages] = useState<number | undefined>(undefined);
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [scale, setScale] = useState<number>(1);
   const customPageValidator = z.object({
     page: z
       .string()
@@ -104,38 +106,79 @@ const PdfRenderer = ({ url }: PdfRendererProps) => {
             <DropdownMenuTrigger asChild>
               <Button aria-label="zoom" variant={"ghost"} className="gap-1.5">
                 <Search className="h-4 w-4" />
+                {scale * 100}% <ChevronDown className="h-3 w-5 opacity-50" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem>100%</DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => {
+                  setScale(1);
+                }}
+              >
+                100%
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => {
+                  setScale(1.25);
+                }}
+              >
+                125%
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => {
+                  setScale(1.5);
+                }}
+              >
+                150%
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => {
+                  setScale(2);
+                }}
+              >
+                200%
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => {
+                  setScale(2.5);
+                }}
+              >
+                250%
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
       <div className="flex-1 w-full max-h-screen">
-        <div ref={ref}>
-          <Document
-            file={url}
-            className={"max-h-full"}
-            loading={
-              <div className="flex justify-center">
-                <Loader2 className="my-24 h-6 w-6 animate-spin" />
-              </div>
-            }
-            onLoadError={() => {
-              toast({
-                title: "Error Loading PDF",
-                description: "Please try again later",
-                variant: "destructive",
-              });
-            }}
-            onLoadSuccess={({ numPages }) => {
-              setNumPages(numPages);
-            }}
-          >
-            <Page width={width ? width : undefined} pageNumber={currentPage} />
-          </Document>
-        </div>
+        <SimpleBar autoHide={false} className="max-h-[calc(100vh-10rem)]">
+          <div ref={ref}>
+            <Document
+              file={url}
+              className={"max-h-full"}
+              loading={
+                <div className="flex justify-center">
+                  <Loader2 className="my-24 h-6 w-6 animate-spin" />
+                </div>
+              }
+              onLoadError={() => {
+                toast({
+                  title: "Error Loading PDF",
+                  description: "Please try again later",
+                  variant: "destructive",
+                });
+              }}
+              onLoadSuccess={({ numPages }) => {
+                setNumPages(numPages);
+              }}
+            >
+              <Page
+                width={width ? width : undefined}
+                pageNumber={currentPage}
+                scale={scale}
+              />
+            </Document>
+          </div>
+        </SimpleBar>
       </div>
     </div>
   );
