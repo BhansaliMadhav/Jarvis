@@ -2,10 +2,6 @@ import { db } from "@/db";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { PDFLoader } from "langchain/document_loaders/fs/pdf";
-import { pinecone } from "@/lib/pinecone";
-import { PineconeStore } from "langchain/vectorstores/pinecone";
-import { HuggingFaceInferenceEmbeddings } from "@langchain/community/embeddings/hf";
-import { Document } from "langchain/document";
 import { getUserSubscriptionPlan } from "@/lib/stripe";
 import { PLANS } from "@/config/stripe";
 
@@ -90,27 +86,6 @@ const onUploadComplete = async ({
     });
   }
 };
-
-// Helper function to chunk text and maintain metadata
-function chunkDocument(doc: Document, chunkSize: number = 1000) {
-  const text = doc.pageContent;
-  const chunks: Document[] = [];
-
-  for (let i = 0; i < text.length; i += chunkSize) {
-    const chunk = text.slice(i, i + chunkSize);
-    chunks.push(
-      new Document({
-        pageContent: chunk,
-        metadata: {
-          ...doc.metadata,
-          chunk_index: Math.floor(i / chunkSize).toString(), // Convert to string
-        },
-      })
-    );
-  }
-
-  return chunks;
-}
 
 export const ourFileRouter = {
   freePlanUploader: f({
