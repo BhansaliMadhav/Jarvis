@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog";
 import { Button } from "./ui/button";
+
 import Dropzone from "react-dropzone";
 import { Cloud, File, Loader2 } from "lucide-react";
 import { Progress } from "./ui/progress";
@@ -11,13 +12,17 @@ import { useToast } from "@/hooks/use-toast";
 import { trpc } from "@/app/_trpc/client";
 import { useRouter } from "next/navigation";
 
-const UploadDropZone = () => {
+const UploadDropzone = ({ isSubscribed }: { isSubscribed: boolean }) => {
   const router = useRouter();
-  const { toast } = useToast();
+
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const { toast } = useToast();
 
-  const { startUpload } = useUploadThing("pdfUploader");
+  const { startUpload } = useUploadThing(
+    isSubscribed ? "ProPlanUploader" : "freePlanUploader"
+  );
+
   const { mutate: startPolling } = trpc.getFile.useMutation({
     onSuccess: (file) => {
       router.push(`/dashboard/${file.id}`);
@@ -25,6 +30,7 @@ const UploadDropZone = () => {
     retry: true,
     retryDelay: 500,
   });
+
   const startSimulatedProgress = () => {
     setUploadProgress(0);
 
@@ -40,35 +46,41 @@ const UploadDropZone = () => {
 
     return interval;
   };
+
   return (
     <Dropzone
       multiple={false}
       onDrop={async (acceptedFile) => {
-        console.log(acceptedFile);
         setIsUploading(true);
-        const progress = startSimulatedProgress();
-        // handle file Uploading
+
+        const progressInterval = startSimulatedProgress();
+
+        // handle file uploading
         const res = await startUpload(acceptedFile);
 
         if (!res) {
           return toast({
             title: "Something went wrong",
-            description: "Please Try again Later",
+            description: "Please try again later",
             variant: "destructive",
           });
         }
 
-        const [fileResponse] = res!;
+        const [fileResponse] = res;
+
         const key = fileResponse?.key;
+
         if (!key) {
           return toast({
             title: "Something went wrong",
-            description: "Please Try again Later",
+            description: "Please try again later",
             variant: "destructive",
           });
         }
-        clearInterval(progress);
+
+        clearInterval(progressInterval);
         setUploadProgress(100);
+
         startPolling({ key });
       }}
     >
@@ -88,14 +100,11 @@ const UploadDropZone = () => {
                   <span className="font-semibold">Click to upload</span> or drag
                   and drop
                 </p>
-                <p className="text-xs text-zinc-500">PDF (up to 4MB)</p>
+                <p className="text-xs text-zinc-500">
+                  PDF (up to {isSubscribed ? "16" : "4"}MB)
+                </p>
               </div>
-              <input
-                {...getInputProps()}
-                type="file"
-                accept="application/pdf"
-                className="hidden"
-              />
+
               {acceptedFiles && acceptedFiles[0] ? (
                 <div className="max-w-xs bg-white flex items-center rounded-md overflow-hidden outline outline-[1px] outline-zinc-200 divide-x divide-zinc-200">
                   <div className="px-3 py-2 h-full grid place-items-center">
@@ -119,11 +128,18 @@ const UploadDropZone = () => {
                   {uploadProgress === 100 ? (
                     <div className="flex gap-1 items-center justify-center text-sm text-zinc-700 text-center pt-2">
                       <Loader2 className="h-3 w-3 animate-spin" />
-                      Redirecting ...
+                      Redirecting...
                     </div>
                   ) : null}
                 </div>
               ) : null}
+
+              <input
+                {...getInputProps()}
+                type="file"
+                id="dropzone-file"
+                className="hidden"
+              />
             </label>
           </div>
         </div>
@@ -132,26 +148,24 @@ const UploadDropZone = () => {
   );
 };
 
-const UploadButton = () => {
+const UploadButton = ({ isSubscribed }: { isSubscribed: boolean }) => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
+
   return (
     <Dialog
       open={isOpen}
       onOpenChange={(v) => {
-        if (!v) setIsOpen(v);
+        if (!v) {
+          setIsOpen(v);
+        }
       }}
     >
-      <DialogTrigger
-        asChild
-        onClick={() => {
-          setIsOpen(true);
-        }}
-      >
+      <DialogTrigger onClick={() => setIsOpen(true)} asChild>
         <Button>Upload PDF</Button>
       </DialogTrigger>
+
       <DialogContent>
-        <DialogTitle>Drag or Drop File here</DialogTitle>
-        <UploadDropZone />
+        <UploadDropzone isSubscribed={isSubscribed} />
       </DialogContent>
     </Dialog>
   );

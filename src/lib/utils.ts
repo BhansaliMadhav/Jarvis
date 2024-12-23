@@ -13,8 +13,8 @@ export function absoluteUrl(path: string) {
 }
 
 export function constructMetadata({
-  title = "Quill - the SaaS for students",
-  description = "Quill is an open-source software to make chatting to your PDF files easy.",
+  title = "Jarvis - the SaaS to answer all your questions",
+  description = "Jarvis is an open-source software to make chatting to your PDF files easy.",
   image = "/thumbnail.png",
   icons = "/favicon.ico",
   noIndex = false,
@@ -37,16 +37,8 @@ export function constructMetadata({
         },
       ],
     },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: [image],
-      creator: "@joshtriedcoding",
-    },
     icons,
-    metadataBase: new URL("https://quill-jet.vercel.app"),
-    themeColor: "#FFF",
+    metadataBase: new URL("https://jarvis-blush-ten.vercel.app/"),
     ...(noIndex && {
       robots: {
         index: false,
