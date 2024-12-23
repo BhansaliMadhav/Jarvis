@@ -69,61 +69,6 @@ const onUploadComplete = async ({
       });
     }
     // Initialize Pinecone and HuggingFace
-    const pineconeIndex = pinecone.Index("jarvis");
-    const hfEmbeddings = new HuggingFaceInferenceEmbeddings({
-      model: "sentence-transformers/all-MiniLM-L6-v2",
-      apiKey: process.env.HUGGINGFACEHUB_API_KEY!,
-    });
-
-    // Process documents: chunk each page and prepare for embedding
-    const processedDocs = pageLevelDocs.flatMap((doc, pageIndex) => {
-      // Add page number to metadata
-      doc.metadata = {
-        pageNumber: (pageIndex + 1).toString(), // Convert to string
-        fileId: createdFile.id,
-        fileName: file.name,
-      };
-
-      // Chunk the document and maintain metadata
-      return chunkDocument(doc);
-    });
-
-    // Prepare text for embeddings
-    const textChunks = processedDocs.map((doc) => doc.pageContent);
-
-    // Generate embeddings in batches to prevent memory issues
-    const batchSize = 50;
-    const vectors = [];
-
-    for (let i = 0; i < textChunks.length; i += batchSize) {
-      const batchTexts = textChunks.slice(i, i + batchSize);
-      const batchEmbeddings = await hfEmbeddings.embedDocuments(batchTexts);
-
-      // Create vectors for this batch with properly formatted metadata
-      const batchVectors = batchEmbeddings.map((embedding, batchIndex) => {
-        const currentDoc = processedDocs[i + batchIndex];
-        return {
-          id: `${createdFile.id}-${i + batchIndex}`,
-          values: embedding,
-          metadata: {
-            text: currentDoc.pageContent,
-            pageNumber: currentDoc.metadata.pageNumber,
-            fileId: currentDoc.metadata.fileId,
-            fileName: currentDoc.metadata.fileName,
-            chunkIndex: (i + batchIndex).toString(),
-          },
-        };
-      });
-
-      vectors.push(...batchVectors);
-    }
-
-    // Upload vectors to Pinecone in batches
-    const uploadBatchSize = 100;
-    for (let i = 0; i < vectors.length; i += uploadBatchSize) {
-      const batchVectors = vectors.slice(i, i + uploadBatchSize);
-      await pineconeIndex.upsert(batchVectors);
-    }
 
     // Update file status to success
     await db.file.update({
