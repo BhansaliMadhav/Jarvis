@@ -50,6 +50,7 @@ const UploadDropzone = ({ isSubscribed }: { isSubscribed: boolean }) => {
   return (
     <Dropzone
       multiple={false}
+      noClick // Prevents Dropzone from opening file dialog automatically
       onDrop={async (acceptedFile) => {
         setIsUploading(true);
 
