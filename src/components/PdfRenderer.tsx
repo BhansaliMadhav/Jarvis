@@ -75,10 +75,12 @@ const PdfRenderer = ({ url }: PdfRendererProps) => {
           <Button
             variant={"ghost"}
             aria-label="previous page"
-            disabled={currentPage <= 1}
+            disabled={numPages === undefined || currentPage === numPages!}
             onClick={() => {
-              setCurrentPage((prev) => (prev - 1 > 1 ? prev - 1 : 1));
-              setValue("page", String(currentPage - 1));
+              setCurrentPage((prev) =>
+                prev + 1 > numPages! ? numPages! : prev + 1
+              );
+              setValue("page", String(currentPage + 1));
             }}
           >
             <ChevronDown className="h-4 w-4" />
@@ -102,12 +104,10 @@ const PdfRenderer = ({ url }: PdfRendererProps) => {
             </p>
           </div>
           <Button
-            disabled={numPages === undefined || currentPage === numPages!}
+            disabled={currentPage <= 1}
             onClick={() => {
-              setCurrentPage((prev) =>
-                prev + 1 > numPages! ? numPages! : prev + 1
-              );
-              setValue("page", String(currentPage + 1));
+              setCurrentPage((prev) => (prev - 1 > 1 ? prev - 1 : 1));
+              setValue("page", String(currentPage - 1));
             }}
             variant={"ghost"}
             aria-label="next page"
