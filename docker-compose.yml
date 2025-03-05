@@ -1,35 +1,41 @@
 version: "3.8"
 
 services:
-  nextjs:
-    build:
-      context: .
-    container_name: nextjs_dev
-    ports:
-      - "3000:3000"
-      - "5555:5555"
-    volumes:
-      - .:/app
-      - /app/node_modules
-    environment:
-      - DATABASE_URL=postgresql://myuser:mypassword@postgres:5432/mydatabase
-    env_file:
-      - .env # Loads environment variables from .env
-    command: pnpm run dev
-
+  # PostgreSQL Database
   postgres:
     image: postgres:15
     container_name: postgres_db
     restart: always
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydatabase
     ports:
       - "5432:5432"
-
-    environment:
-      - POSTGRES_USER=myuser
-      - POSTGRES_PASSWORD=mypassword # Make sure this is set!
-      - POSTGRES_DB=mydatabase
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+  # Next.js Application (Multiple Replicas)
+  nextjs:
+    image: nextjs-app # Use your Next.js Docker image
+    deploy:
+      replicas: 2 # change the number in case you want to create multiple instances and need nginx to do load balancing default is set to 2
+    environment:
+      - DATABASE_URL=postgresql://myuser:mypassword@postgres:5432/mydatabase
+      - NODE_ENV=production
+    depends_on:
+      - postgres
+
+  # Nginx Load Balancer
+  nginx:
+    image: nginx
+    container_name: nginx_lb
+    ports:
+      - "3000:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - nextjs
 
 volumes:
   postgres_data:
